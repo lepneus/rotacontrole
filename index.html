@@ -256,6 +256,23 @@ function ico(name,size=18){return `<svg width="${size}" height="${size}" viewBox
 for(const el of document.querySelectorAll('[data-icon]')) el.innerHTML=ico(el.dataset.icon);
 const emptyData=()=>({version:2,customers:[],plates:[],products:[],invoices:[],sales:[],payments:[],cashDays:{},adjustments:[],cards:[],cardSettings:{debitDays:1,creditDays:30,debitFee:0,creditFee:0,bank:'Sicredi'},monthlyClosings:{},cancellations:[]});
 let state;try{const src=JSON.parse(localStorage.getItem(KEY)||'null');state=src&&Array.isArray(src.customers)&&Array.isArray(src.plates)&&Array.isArray(src.sales)&&Array.isArray(src.products)?{...emptyData(),...src}:emptyData()}catch(_){state=emptyData()}
+// Clientes importados da lista do sistema antigo. A inclusão é idempotente:
+// preserva os clientes existentes e não duplica nomes ao recarregar o HTML.
+const ROTA_CLIENTES_IMPORTADOS=[
+  "",
+];
+if(!state.__rotaClientesImportados342){
+  const existentes=new Set(state.customers.map(c=>String(c.name||'').trim().toLocaleLowerCase('pt-BR')));
+  for(const name of ROTA_CLIENTES_IMPORTADOS){
+    const chave=name.toLocaleLowerCase('pt-BR');
+    if(!existentes.has(chave)){
+      state.customers.push({id:'cli_'+Date.now().toString(36)+Math.random().toString(36).slice(2,8),name,doc:'',phone:'',email:'',address:'',city:'NOVA AURORA',uf:'PR',type:'Cliente',status:'Ativo',createdAt:new Date().toISOString()});
+      existentes.add(chave);
+    }
+  }
+  state.__rotaClientesImportados342=true;
+  try{localStorage.setItem(KEY,JSON.stringify(state))}catch(_){}
+}
 let page='dashboard',pageQuery='',saleDraft=null,invoiceDraft=null,reportStart='',reportEnd='',currentCashDay='',toastTimer=null;
 const $=id=>document.getElementById(id),esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c])),val=id=>$(id)?.value?.trim()||'',num=x=>Number.isFinite(Number(x))?Number(x):0,positive=x=>Math.max(0,num(x)),money=x=>new Intl.NumberFormat('pt-BR',{style:'currency',currency:'BRL'}).format(num(x)),qtd=x=>new Intl.NumberFormat('pt-BR',{maximumFractionDigits:3}).format(num(x)),uid=()=>typeof crypto!=='undefined'&&crypto.randomUUID?crypto.randomUUID():'id_'+Date.now().toString(36)+Math.random().toString(36).slice(2,9);
 function today(){const d=new Date();return `${d.getFullYear()}-${String(d.getMonth()+1).padStart(2,'0')}-${String(d.getDate()).padStart(2,'0')}`}
