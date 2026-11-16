@@ -1268,6 +1268,29 @@ save=function(){
 document.getElementById('rotaTestMode')?.addEventListener('click',rotaStartTestMode);
 document.getElementById('rotaTestMode')?.remove();
 
+// Busca sem travar o campo: permite digitar o nome completo normalmente.
+let rotaBuscaTimer=null;
+document.addEventListener('input',e=>{
+  const t=e.target;
+  if(!t.hasAttribute('data-page-search'))return;
+  e.stopImmediatePropagation();
+  pageQuery=t.value;
+  clearTimeout(rotaBuscaTimer);
+  rotaBuscaTimer=setTimeout(()=>render(),500);
+},true);
+// Busca global aceita o nome completo desde a primeira letra.
+globalSearch=function(){
+  const q=val('globalSearch').toLocaleLowerCase('pt-BR'),result=$('searchResults');
+  if(!q){result.classList.remove('show');return}
+  const found=[
+    ...state.customers.filter(c=>(c.name+' '+(c.doc||'')).toLocaleLowerCase('pt-BR').includes(q)).slice(0,3).map(c=>({name:c.name,desc:'Cliente · '+(c.phone||'Cadastro'),nav:'clientes'})),
+    ...state.plates.filter(c=>(c.plate+' '+c.model).toLocaleLowerCase('pt-BR').includes(q)).slice(0,3).map(p=>({name:p.plate,desc:'Placa · '+(getCustomer(p.customerId)?.name||''),nav:'servicos'})),
+    ...state.products.filter(p=>(p.name+' '+p.sku).toLocaleLowerCase('pt-BR').includes(q)).slice(0,3).map(p=>({name:p.name,desc:'Produto · '+p.sku,nav:'estoque'})),
+    ...state.sales.filter(s=>s.number.toLocaleLowerCase('pt-BR').includes(q)).slice(0,2).map(s=>({name:s.number,desc:'Venda · '+money(s.total),nav:'vendas'}))
+  ].slice(0,9);
+  result.innerHTML=found.length?found.map(x=>`<button class="search-result" data-action="search-go" data-nav-target="${x.nav}" data-query="${esc(q)}"><strong>${esc(x.name)}</strong><small>${esc(x.desc)}</small></button>`).join(''):`<div style="padding:15px;font-size:11px;color:#8190a3">Nenhum resultado.</div>`;
+  result.classList.add('show');
+};
 rotaInitialize();
 
 
