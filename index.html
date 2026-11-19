@@ -945,12 +945,51 @@ function rotaHasData(d) {
   return ['customers','plates','products','invoices','sales','payments','adjustments','cards'].some(k=>(d[k]||[]).length>0)
     || Object.keys(d.cashDays||{}).length>0 || Object.keys(d.monthlyClosings||{}).length>0;
 }
+function rotaNotebookImport(){
+  if(state.__rotaNotebookNov2026)return;
+  const rows=[
+['2026-11-06','CAMINHÃO','MIKA',300,'nota'],['2026-11-06','MOBI','BIONOVA',70,'dinheiro'],['2026-11-06','NIVUS','MIKA',80,'pix'],['2026-11-06','STRADA','COAVE',70,'nota'],['2026-11-06','CAMINHÃO','COAVE',280,'nota'],['2026-11-06','GOL','BIONOVA',70,'pix'],['2026-11-06','FIORINO','COAVE',70,'nota'],['2026-11-06','VECTRA','RENAN',60,'dinheiro'],['2026-11-06','HB20','PEDRO',60,'pix'],['2026-11-06','ASTRA','FAFU',80,'nota'],['2026-11-06','BOIADEIRO','CARLOS PABLO ARAÚJO',150,'pix'],['2026-11-06','GOL','BIONOVA',70,'dinheiro'],['2026-11-06','HB20','BIONOVA',70,'dinheiro'],
+['2026-11-07','CHUVEQUEIRO','BATATA',400,'nota'],['2026-11-07','FUSION','RAFA',80,'pix'],['2026-11-07','MOBI','TINÃO',80,'debito'],['2026-11-07','SPACE FOX','IMAP',80,'nota'],['2026-11-07','MACARRÃO','PROFETA',300,'nota'],
+['2026-11-09','CAMINHÃO','COAVE',240,'nota'],['2026-11-09','MOBI','JAIR CASTAGNA',80,'credito'],['2026-11-09','CAMINHÃO','XAVIER ARNOLDO',130,'pix'],['2026-11-09','STRADA','BETINHO (TIÃO BARROS)',20,'dinheiro'],['2026-11-09','CELTA','CLIENTE NÃO IDENTIFICADO',80,'pix'],['2026-11-09','CAMINHÃO','BIONOVA',350,'nota'],['2026-11-09','TORO','AGRO+',100,'nota'],['2026-11-09','RANGER','MIKA',100,'nota'],['2026-11-09','CELTA','POR BAIXO',60,'dinheiro'],['2026-11-09','MOTO','ALEVINHO',30,'nota'],
+['2026-11-10','MICRO-ÔNIBUS','CLIENTE NÃO IDENTIFICADO',100,'pix'],['2026-11-10','S10','CARLIN',90,'debito'],['2026-11-10','PALIO','REVO',80,'nota'],['2026-11-10','CAMINHÃO','COAVE',200,'nota'],['2026-11-10','STRADA','AGRO+',80,'nota'],['2026-11-10','FIESTA','SÓ P/ BAIXO',60,'pix'],['2026-11-10','STRADA','ARNOLDO',80,'nota'],['2026-11-10','RANGER','MIKA',100,'nota'],['2026-11-10','PUNTO','UMEC',50,'dinheiro'],['2026-11-10','VAN','S. FAVERO',150,'nota'],['2026-11-10','ÔNIBUS 1407','CSPA',125,'nota'],['2026-11-10','ÔNIBUS 1502','CSPA',125,'nota'],['2026-11-10','ÔNIBUS 1504','CSPA',125,'nota'],['2026-11-10','CAMINHÃO','COAVE',125,'nota'],
+['2026-11-11','CAMINHÃO','COPACOL',450,'nota'],['2026-11-11','MICRO-ÔNIBUS','CSPA',80,'nota'],['2026-11-11','TRACKER','MARCIO NORTE',70,'pix'],['2026-11-11','TAM','ZÉ BRITO BONAM',100,'nota'],['2026-11-11','S10','EDUARDO',100,'nota'],['2026-11-11','ÔNIBUS 1408','CSPA',125,'nota'],['2026-11-11','CRUZE','JOÃO',80,'dinheiro'],['2026-11-11','AMAROK','EDUARDO',100,'nota'],['2026-11-11','CAMINHÃO (MOTOR)','',150,'dinheiro'],['2026-11-11','HB20','MARINA',80,'pix'],['2026-11-11','HB20','LUOMO GUERRA',80,'pix'],
+['2026-11-12','ÔNIBUS 1602','CSPA',125,'nota'],['2026-11-12','GOLLY','BIONOVA',70,'nota'],['2026-11-12','OUTLANDER','MARCOS',80,'dinheiro'],['2026-11-12','S10','COAVE',70,'nota'],['2026-11-12','TRATOR','COPACOL',350,'nota'],['2026-11-12','ÔNIBUS 1307','CSPA',125,'nota'],['2026-11-12','ÔNIBUS 1603','CSPA',125,'nota'],['2026-11-12','ÔNIBUS 2005','CSPA',125,'nota'],['2026-11-12','ÔNIBUS 1406','CSPA',125,'nota'],['2026-11-12','HRV','VAL SEGMENT',80,'pix'],['2026-11-12','STRADA','DIEGO',80,'pix'],['2026-11-12','CORCEL','CARLIN',60,'debito'],['2026-11-12','ASTRA','CAMI',80,'pix'],['2026-11-12','ÔNIBUS 2101','CSPA',125,'nota'],['2026-11-12','ÔNIBUS 1602','CSPA',125,'nota'],['2026-11-12','ÔNIBUS 1807','CSPA',125,'nota'],['2026-11-12','ÔNIBUS 1808','CSPA',125,'nota'],['2026-11-12','CAMINHÃO AUTOESCOLA','',180,'pix'],['2026-11-12','CAMINHONETA','GABRIEL E HORAIS',180,'debito'],
+['2026-11-13','ECOSPORT','CEZAR (MOTOR)',80,'pix'],['2026-11-13','CITY','TATU',80,'pix'],['2026-11-13','COROLLA','EDO',80,'credito'],['2026-11-13','CRONOS','IMAP',80,'pix'],['2026-11-13','GOL','KARINA PRECISÃO',80,'pix'],['2026-11-13','STRADA','MARCOS BECKER',80,'dinheiro'],['2026-11-13','FUSCA','WEBER',80,'dinheiro'],['2026-11-13','CAMINHÃO','MARAVILHA',180,'pix'],['2026-11-13','TORO','',100,'dinheiro'],['2026-11-13','STRADA','GUSTAVO',80,'dinheiro'],
+['2026-11-14','MONTANA','BIONOVA',70,'nota'],['2026-11-14','HILUX','DALA',60,'dinheiro'],['2026-11-14','MONTANA','IMAP (TREVO)',80,'nota'],['2026-11-14','BIZ','ALEVINHO',30,'nota'],['2026-11-14','CAMINHÃO','BIONOVA',220,'pix'],['2026-11-14','UNO','TATU',80,'pix'],['2026-11-14','CRONOS','RONALDO',80,'nota'],['2026-11-14','CRONOS','LEANDRO',80,'nota']
+  ];
+  const expenses=[['2026-11-10','Compra de copos e detergente',43.55,'dinheiro'],['2026-11-12','Frete de mercadorias',194.40,'pix'],['2026-11-14','Compra de calças plásticas',780,'dinheiro']];
+  const plateFor=i=>'RTA'+String.fromCharCode(65+(i%26))+String(i+1).padStart(2,'0');
+  const customerFor=name=>{
+    const clean=String(name||'Cliente não identificado').trim()||'Cliente não identificado';
+    const found=state.customers.find(c=>String(c.name||'').trim().toLocaleLowerCase('pt-BR')===clean.toLocaleLowerCase('pt-BR'));
+    if(found)return found;
+    const c={id:uid(),createdAt:now(),name:clean,doc:'',phone:'',email:'',address:'',city:'NOVA AURORA',uf:'PR',type:'Cliente',status:'Ativo',notes:'Importado do caderno do caixa'};
+    state.customers.push(c);return c;
+  };
+  rows.forEach((r,i)=>{
+    const day=r[0],customer=customerFor(r[2]),plateText=plateFor(i),plate={id:uid(),customerId:customer.id,plate:plateText,brand:'',model:r[1],year:'',color:'',notes:'Placa provisória importada do caderno',createdAt:day+'T12:00'};
+    state.plates.push(plate);
+    const number='L'+String(state.sales.filter(isServiceSale).length+1).padStart(5,'0'),method=r[4],paid=method!=='nota'&&method!=='prazo';
+    state.sales.push({id:uid(),number,kind:'lavagem',date:day+'T12:00',customerId:customer.id,plateId:plate.id,plateText,vehicle:r[1],serviceType:'Lavagem simples',serviceDescription:'Lavagem registrada do caderno do caixa',items:[{type:'service',productId:'',name:'Lavagem simples',qty:1,price:r[3],cost:0}],supplies:[],subtotal:r[3],discount:0,total:r[3],method,paid,notes:'Importado do caderno do caixa'});
+    if(!state.cashDays[day])state.cashDays[day]={openedAt:day+'T07:00',opening:0,closedAt:'',notes:'Caixa importado do caderno'};
+  });
+  expenses.forEach(e=>{
+    const day=e[0];
+    state.payments.push({id:uid(),flow:'saida',status:'pago',description:e[1],party:'',category:'Despesa do caixa',method:e[3],dueDate:day,amount:e[2],notes:'Lançamento vermelho do caderno do caixa',createdAt:day+'T12:00',paidAt:day+'T12:00'});
+    if(!state.cashDays[day])state.cashDays[day]={openedAt:day+'T07:00',opening:0,closedAt:'',notes:'Caixa importado do caderno'};
+  });
+  state.__rotaNotebookNov2026=true;
+  save();
+  toast('Lançamentos do caderno inseridos: dias 6, 7 e 9 a 14.',false);
+}
+
 function rotaSetReady() {
   rotaFb.active=true;rotaFb.dirty=false;rotaFb.conflict=false;
   document.body.classList.add('rota-fb-ready');
   document.getElementById('rotaFbEmail').value='';
   document.getElementById('rotaFbPass').value='';
   rotaSyncLabel('Nuvem sincronizada');
+  rotaNotebookImport();
   render();
 }
 function rotaUseRemote(payload,revision) {
