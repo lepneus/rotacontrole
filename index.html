@@ -1420,7 +1420,7 @@ function paymentEditModal(id){
 }
 const rotaPaymentRenderBase=renderPagamentos;
 renderPagamentos=function(){
-  return rotaPaymentRenderBase().replace(/<button class="btn small" data-action="payment-view" data-id="([^"]+)">([^<]*)<\/button>/g,'<button class="btn small" data-action="payment-edit" data-id="$1">Editar</button><button class="btn small" data-action="payment-view" data-id="$1">$2</button>');
+  return rotaPaymentRenderBase().replace(/<button class="btn small" data-action="payment-view" data-id="([^"]+)">([\s\S]*?)<\/button>/g,'<button class="btn small" data-action="payment-edit" data-id="$1">Editar</button><button class="btn small" data-action="payment-view" data-id="$1">$2</button>');
 };
 const rotaEditActionWithPayment=handleAction;
 handleAction=function(target){
