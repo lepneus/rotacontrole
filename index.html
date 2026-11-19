@@ -1349,6 +1349,63 @@ globalSearch=function(){
   result.innerHTML=found.length?found.map(x=>`<button class="search-result" data-action="search-go" data-nav-target="${x.nav}" data-query="${esc(q)}"><strong>${esc(x.name)}</strong><small>${esc(x.desc)}</small></button>`).join(''):`<div style="padding:15px;font-size:11px;color:#8190a3">Nenhum resultado.</div>`;
   result.classList.add('show');
 };
+let rotaLavagemMes='',rotaLavagemInicio=1,rotaLavagemFim=31,rotaLavagemOrdem='desc';
+const rotaRenderServicosBase=renderServicos;
+renderServicos=function(){
+  const originalSales=state.sales,allServices=originalSales.filter(isServiceSale);
+  const months=[...new Set(allServices.map(s=>String(s.date||'').slice(0,7)).filter(Boolean))].sort().reverse();
+  const monthLabel=m=>{const [y,mo]=m.split('-');const text=new Intl.DateTimeFormat('pt-BR',{month:'long',year:'numeric',timeZone:'UTC'}).format(new Date(Date.UTC(Number(y),Number(mo)-1,1)));return text.charAt(0).toUpperCase()+text.slice(1)};
+  const monthOptions='<option value="">Todos os meses</option>'+months.map(m=>'<option value="'+esc(m)+'" '+(m===rotaLavagemMes?'selected':'')+'>'+esc(monthLabel(m))+'</option>').join('');
+  const dayOptions=(selected,allLabel)=>'<option value="'+(allLabel?'':'1')+'">'+(allLabel?'Todos os dias':'1')+'</option>'+Array.from({length:31},(_,i)=>{const d=i+1;return '<option value="'+d+'" '+(String(selected)===String(d)?'selected':'')+'>'+d+'</option>'}).join('');
+  const filterServices=allServices.filter(s=>{
+    const d=String(s.date||'').slice(0,10),day=Number(d.slice(8,10));
+    return (!rotaLavagemMes||d.slice(0,7)===rotaLavagemMes)&&day>=Number(rotaLavagemInicio)&&day<=Number(rotaLavagemFim);
+  });
+  const keep=new Set(filterServices.map(s=>s.id));
+  state.sales=originalSales.filter(s=>!isServiceSale(s)||keep.has(s.id)).slice().sort((a,b)=>{
+    const cmp=String(a.date||'').localeCompare(String(b.date||''));
+    return rotaLavagemOrdem==='desc'?cmp:-cmp;
+  });
+  let html=rotaRenderServicosBase();
+  state.sales=originalSales;
+  const controls='<div class="service-filters" style="display:flex;flex-wrap:wrap;gap:8px;align-items:end;width:100%;margin-bottom:10px"><div class="form-group" style="min-width:150px;flex:1"><label>MÊS</label><select id="lavagemMonthFilter" class="field">'+monthOptions+'</select></div><div class="form-group" style="width:105px"><label>DIA INICIAL</label><select id="lavagemStartFilter" class="field">'+dayOptions(rotaLavagemInicio,false)+'</select></div><div class="form-group" style="width:105px"><label>DIA FINAL</label><select id="lavagemEndFilter" class="field">'+dayOptions(rotaLavagemFim,false)+'</select></div><div class="form-group" style="min-width:165px;flex:1"><label>ORDENAÇÃO</label><select id="lavagemOrderFilter" class="field"><option value="desc" '+(rotaLavagemOrdem==='desc'?'selected':'')+'>Mais recentes primeiro</option><option value="asc" '+(rotaLavagemOrdem==='asc'?'selected':'')+'>Mais antigos primeiro</option></select></div></div>';
+  return html.replace('<div class="toolbar"><input class="field" data-page-search', '<div class="toolbar" style="display:block"><div>'+controls+'</div><div style="display:flex;gap:10px;align-items:center"><input class="field" data-page-search');
+};
+document.addEventListener('change',e=>{
+  const t=e.target;
+  if(t.id==='lavagemMonthFilter'){rotaLavagemMes=t.value;render();return}
+  if(t.id==='lavagemStartFilter'){rotaLavagemInicio=Number(t.value||1);if(rotaLavagemInicio>rotaLavagemFim)rotaLavagemFim=rotaLavagemInicio;render();return}
+  if(t.id==='lavagemEndFilter'){rotaLavagemFim=Number(t.value||31);if(rotaLavagemFim<rotaLavagemInicio)rotaLavagemInicio=rotaLavagemFim;render();return}
+  if(t.id==='lavagemOrderFilter'){rotaLavagemOrdem=t.value;render();return}
+});
+
+function serviceEditModal(id){
+  const s=state.sales.find(x=>x.id===id);
+  if(!s||!isServiceSale(s)){toast('Lavagem não encontrada.',true);return}
+  const plate=getPlate(s.plateId),base=Number(s.items?.[0]?.price||s.total||0),discount=Number(s.discount||0);
+  const body='<form id="serviceEditForm" data-id="'+esc(s.id)+'"><div class="form-grid"><div class="form-group"><label>Cliente *</label><select name="customerId" required>'+customerOptions(s.customerId)+'</select></div><div class="form-group"><label>Placa / veículo *</label><input name="plate" value="'+esc(s.plateText||plate?.plate||'')+'" maxlength="8" required style="text-transform:uppercase" pattern="[a-zA-Z]{3}[0-9][a-zA-Z0-9][0-9]{2}"></div><div class="form-group"><label>Veículo</label><input name="vehicle" value="'+esc(s.vehicle||plate?.model||'')+'" maxlength="80"></div><div class="form-group"><label>Tipo de lavagem / serviço *</label><select name="serviceType" required><option '+(s.serviceType==='Lavagem simples'?'selected':'')+'>Lavagem simples</option><option '+(s.serviceType==='Lavagem completa'?'selected':'')+'>Lavagem completa</option><option '+(s.serviceType==='Lavagem detalhada'?'selected':'')+'>Lavagem detalhada</option><option '+(s.serviceType==='Higienização interna'?'selected':'')+'>Higienização interna</option><option '+(s.serviceType==='Polimento'?'selected':'')+'>Polimento</option><option '+(!['Lavagem simples','Lavagem completa','Lavagem detalhada','Higienização interna','Polimento'].includes(s.serviceType||'')?'selected':'')+'>Outro serviço</option></select></div><div class="form-group"><label>Valor cobrado (R$) *</label><input name="amount" type="number" min="0.01" step="0.01" value="'+base.toFixed(2)+'" required></div><div class="form-group"><label>Desconto (R$)</label><input name="discount" type="number" min="0" step="0.01" value="'+discount.toFixed(2)+'"></div><div class="form-group full"><label>O que foi feito?</label><textarea name="description" maxlength="1000">'+esc(s.serviceDescription||s.items?.[0]?.name||'')+'</textarea></div><div class="form-group"><label>Forma de pagamento</label><select name="method" required>'+methodOptions(s.method||'',true)+'</select></div><div class="form-group full"><label>Observações</label><textarea name="notes">'+esc(s.notes||'')+'</textarea></div></div><div class="form-actions"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button class="btn primary" type="submit">Salvar alterações</button></div></form>';
+  modal('Editar lavagem '+esc(s.number),'Altere os dados sem criar um novo lançamento.',body);
+}
+const rotaEditAction=handleAction;
+handleAction=function(target){if(target.dataset.action==='service-edit'){serviceEditModal(target.dataset.id);return}return rotaEditAction(target)};
+const rotaRenderServicosWithFilters=renderServicos;
+renderServicos=function(){return rotaRenderServicosWithFilters().replace(/<button class="btn small" data-action="service-view" data-id="([^"]+)">Detalhes<\/button>/g,'<button class="btn small" data-action="service-view" data-id="$1">Detalhes</button><button class="btn small" data-action="service-edit" data-id="$1">Editar</button>')};
+const rotaEditSubmit=handleSubmit;
+handleSubmit=function(form){
+  if(form.id==='serviceEditForm'){
+    const s=state.sales.find(x=>x.id===form.dataset.id),fd=formData(form);
+    if(!s){toast('Lavagem não encontrada.',true);return}
+    const value=Number(fd.amount),disc=Math.max(0,Number(fd.discount||0)),total=+(value-disc).toFixed(2),plateText=String(fd.plate||'').toUpperCase().replace(/[^A-Z0-9]/g,'');
+    if(!fd.customerId||!plateText||!/^[A-Z]{3}[0-9][A-Z0-9][0-9]{2}$/.test(plateText)||!Number.isFinite(value)||value<=0||disc>value){toast('Revise cliente, placa, valor e desconto.',true);return}
+    let plate=getPlate(s.plateId);
+    if(!plate){plate={id:uid(),customerId:fd.customerId,plate:plateText,brand:'',model:'',year:'',color:'',notes:'',createdAt:now()};state.plates.push(plate)}else{plate.customerId=fd.customerId;plate.plate=plateText;plate.model=String(fd.vehicle||'').trim()}
+    Object.assign(s,{customerId:fd.customerId,plateId:plate.id,plateText,vehicle:String(fd.vehicle||'').trim(),serviceType:fd.serviceType,serviceDescription:String(fd.description||'').trim(),subtotal:+value.toFixed(2),discount:disc,total,method:fd.method,paid:fd.method!=='nota'&&fd.method!=='prazo',notes:String(fd.notes||'').trim()});
+    if(s.items?.[0]){s.items[0].name=s.serviceType;s.items[0].price=value}
+    if(save()){closeModal();render();toast('Lavagem atualizada.')}return
+  }
+  return rotaEditSubmit(form)
+};
+
 rotaInitialize();
 
 
