@@ -1406,6 +1406,43 @@ handleSubmit=function(form){
   return rotaEditSubmit(form)
 };
 
+const rotaServiceEditModalWithReason=serviceEditModal;
+serviceEditModal=function(id){
+  rotaServiceEditModalWithReason(id);
+  const form=$('serviceEditForm');
+  if(form&&!form.querySelector('[name="editReason"]'))form.querySelector('.form-actions')?.insertAdjacentHTML('beforebegin','<div class="form-group full"><label>Motivo da edição *</label><input name="editReason" value="Correção de lançamento" required maxlength="200"></div>');
+};
+function paymentEditModal(id){
+  const p=state.payments.find(x=>x.id===id);
+  if(!p){toast('Pagamento não encontrado.',true);return}
+  const body='<form id="paymentEditForm" data-id="'+esc(p.id)+'"><div class="form-grid"><div class="form-group"><label>Tipo</label><select name="flow"><option value="saida" '+(p.flow==='saida'?'selected':'')+'>Saída — Conta a pagar</option><option value="entrada" '+(p.flow==='entrada'?'selected':'')+'>Entrada — A receber</option></select></div><div class="form-group"><label>Situação</label><select name="status"><option value="pendente" '+(p.status==='pendente'?'selected':'')+'>Pendente</option><option value="pago" '+(p.status==='pago'?'selected':'')+'>Pago / Recebido</option></select></div><div class="form-group full"><label>Descrição *</label><input name="description" value="'+esc(p.description||'')+'" required maxlength="150"></div><div class="form-group"><label>Fornecedor / Pagador</label><input name="party" value="'+esc(p.party||'')+'" maxlength="100"></div><div class="form-group"><label>Categoria</label><input name="category" value="'+esc(p.category||'Geral')+'"></div><div class="form-group"><label>Valor (R$) *</label><input name="amount" type="number" step="0.01" min="0.01" value="'+Number(p.amount||0).toFixed(2)+'" required></div><div class="form-group"><label>Forma de pagamento</label><select name="method">'+methodOptions(p.method||'pix',true)+'</select></div><div class="form-group"><label>Vencimento</label><input name="dueDate" type="date" value="'+esc(p.dueDate||'')+'"></div><div class="form-group"><label>Data da baixa</label><input name="paidAt" type="date" value="'+esc(String(p.paidAt||'').slice(0,10))+'"></div><div class="form-group full"><label>Observações</label><textarea name="notes">'+esc(p.notes||'')+'</textarea></div><div class="form-group full"><label>Motivo da edição *</label><input name="editReason" value="Correção de lançamento" required maxlength="200"></div></div><div class="form-actions"><button type="button" class="btn" data-action="close-modal">Cancelar</button><button class="btn primary" type="submit">Salvar alterações</button></div></form>';
+  modal('Editar lançamento','A edição não depende da abertura do caixa.',body);
+}
+const rotaPaymentRenderBase=renderPagamentos;
+renderPagamentos=function(){
+  return rotaPaymentRenderBase().replace(/<button class="btn small" data-action="payment-view" data-id="([^"]+)">([^<]*)<\/button>/g,'<button class="btn small" data-action="payment-edit" data-id="$1">Editar</button><button class="btn small" data-action="payment-view" data-id="$1">$2</button>');
+};
+const rotaEditActionWithPayment=handleAction;
+handleAction=function(target){
+  if(target.dataset.action==='payment-edit'){paymentEditModal(target.dataset.id);return}
+  return rotaEditActionWithPayment(target);
+};
+const rotaEditSubmitWithReason=handleSubmit;
+handleSubmit=function(form){
+  if(form.id==='serviceEditForm'){
+    const fd=formData(form),reason=String(fd.editReason||'').trim(),s=state.sales.find(x=>x.id===form.dataset.id);
+    if(!s||!reason){toast('Informe o motivo da edição.',true);return}
+    s.editReason=reason;s.editedAt=now();
+  }
+  if(form.id==='paymentEditForm'){
+    const p=state.payments.find(x=>x.id===form.dataset.id),fd=formData(form),amount=Number(fd.amount),reason=String(fd.editReason||'').trim();
+    if(!p||!reason||!fd.description.trim()||!Number.isFinite(amount)||amount<=0){toast('Revise os dados e informe o motivo da edição.',true);return}
+    Object.assign(p,{flow:fd.flow,status:fd.status,description:fd.description.trim(),party:fd.party.trim(),category:fd.category.trim(),method:fd.method,dueDate:fd.dueDate,amount,notes:fd.notes.trim(),editReason:reason,editedAt:now(),paidAt:fd.status==='pago'?(fd.paidAt||today())+'T'+now().slice(11):''});
+    if(save()){closeModal();render();toast('Lançamento atualizado.')}return;
+  }
+  return rotaEditSubmitWithReason(form);
+};
+
 rotaInitialize();
 
 
